@@ -2,7 +2,7 @@ seed: 2023
 
 data:
   n_fold: 5
-  root: <absolute path>/HIC/data
+  root: /home/zhangyifan/alive/HIC/data
   # <graph>
   # RG_macro, RG_sub
   # IMDBBINARY, IMDBMULTI, MUTAG, NCI1, PROTEINS
@@ -12,15 +12,51 @@ data:
   # IMDB_wri_form, IMDB_wri_genre
   # IMDB_dir_genre_m, IMDB_wri_genre_m
   # stream_player, twitter_friend
-  name: RHG_10
+  #name: PROTEINS
+  #name: IMDBBINARY
+  #name: RG_macro
+  #name: RG_sub
+  #name: RHG_10
+  #name: IMDB_dir_genre
+  #name: IMDB_dir_form
+  #name: IMDB_wri_genre
+  #name: IMDB_wri_form
+  #name: stream_player
+  #name: MUTAG
+  #name: NCI1
+  #name: RHG_3
+  name: twitter_friend
+  #name: RHG_10
+  #name: IMDB_wri_genre_m
+  #name: IMDB_dir_genre_m
   degree_as_tag: true
 
 model:
   # graphlet_sampling, graph_subtree
   # hypergraph_rooted, hypergraph_directed_line, 
   # hypergraph_subtree, hypergraph_hyedge
-  name: hypergraph_subtree
-  normalize: true
+  #name: graphlet_sampling
+  #name: graph_homo
+  #name: graph_retgk
+  #name: graph_persistencewl
+  #name: hypergraph_sum_wl
+  #name: graph_subtree
+  #name: hypergraph_rooted
+  #name: hypergraph_directed_line
+  #name: graph_shortestpath
+  #name: hypergraph_rethgk
+  #name: hypergraph_subtree
+  #name: hypergraph_hyedge
+  #name: hypergraph_ewl
+  #name: hypergraph_sck
+  #name: hypergraph_spk
+  #name: graph_2wl
+  #name: hypergraph_hsvd
+  name: hypergraph_motifs
+  #name: hypergraph_mochy
+  #name: hypergraph_v_e
+  #name: hypergraph_svk
+  normalize: True
 
 hydra:
   run:

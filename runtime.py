@@ -14,6 +14,8 @@ from models import (
     HypergraphDirectedLineKernel,
     HypergraphSubtreeKernel,
     HypergraphHyedgeKernel,
+    GHC,
+    RetHGK,
 )
 from utils import load_data
 
@@ -103,11 +105,22 @@ def infer(model_name, x_list):
         model = HypergraphSubtreeKernel()
     elif model_name == "hypergraph_hyedge":
         model = HypergraphHyedgeKernel()
+    elif model_name == "hypergraph_sck":
+        model1 = HypergraphSubtreeKernel()
+        #model2 = RetHGK(n_step=3)
+        model2 = GHC(normalize=True,size=6,types='c')
+    elif model_name=='hypergraph_spk':
+        model1 = HypergraphSubtreeKernel()
+        model2 = RetHGK(n_step=5)
     else:
         raise NotImplementedError
 
     st = time.time()
-    K_train = model.fit_transform(x_list).cpu().numpy()
+    if model_name not in ['hypergraph_sck','hypergraph_spk']:
+        K_train = model.fit_transform(x_list).cpu().numpy()
+    else:
+        K_train1 = model1.fit_transform(x_list).cpu().numpy()
+        K_train2 = model2.fit_transform(x_list).cpu().numpy()
     duration = time.time() - st
     print(f"Training time: {duration:.4f}s")
 
@@ -176,23 +189,26 @@ if __name__ == "__main__":
     # ----------------------------------
     # model_names = ['hypergraph_directed_line', 'hypergraph_rooted', 'hypergraph_subtree', 'hypergraph_hyedge']
     model_names = [
-        "hypergraph_directed_line",
+        #"hypergraph_directed_line",
         "hypergraph_subtree",
         "hypergraph_hyedge",
+        #'hypergraph_sck',
+        'hypergraph_spk'
     ]
     # ------------ for number of hypergraphs ----------------------
     # gen_hypergraphs_for_n_hg(5000)
     # runtime_for_n_hg(model_names)
     # ------------ for number of vertices --------------------------
-    # n_v_list = [10, 20, 30, 40, 50, 100, 150, 200]
-    # gen_hypergraphs_for_n_v(n_v_list)
-    # runtime_for_n_v(model_names, n_v_list)
+    #n_v_list = [10, 20, 30, 40, 50, 100, 150, 200]
+    n_v_list = [300,400,500,600,700]
+    gen_hypergraphs_for_n_v(n_v_list)
+    runtime_for_n_v(model_names, n_v_list)
     # ------------ for number of hyperedge -------------------------
     # n_e_list = [5, 10, 15, 20, 50, 100, 150, 200]
     # gen_hypergraphs_for_n_e(n_e_list)
     # runtime_for_n_e(model_names, n_e_list)
     # ------------ for number of hyperedge degree ------------------
-    de_list = [2, 3, 4, 5, 10, 15, 20]
-    # de_list = [5]
-    # gen_hypergraphs_for_deg_e(de_list)
-    runtime_for_de(model_names, de_list)
+    # de_list = [2, 3, 4, 5, 10, 15, 20]
+    # # de_list = [5]
+    # # gen_hypergraphs_for_deg_e(de_list)
+    # runtime_for_de(model_names, de_list)

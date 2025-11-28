@@ -1,5 +1,7 @@
 import dhg
+import math
 import scipy
+import torch
 import numpy as np
 from dhg import Graph, Hypergraph
 from sklearn.svm import SVC
@@ -7,9 +9,53 @@ from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score, f1_score
 from skmultilearn.problem_transform import BinaryRelevance
 
+from sklearn.model_selection import GridSearchCV
+
 g2hg_func = dhg.Hypergraph.from_graph
 hg2g_func = dhg.Graph.from_hypergraph_clique
+hg2gstar_func=dhg.Graph.from_hypergraph_star
+def read_labels(filename):
+    labels=[]
+    with open(filename) as f:
+        labels=f.readlines()
+        labels=[label.strip() for label in labels]
+    return labels
 
+def load_data_(name,root,degree_as_tag,model_type):
+    if name in ['DD','PTC-MM']:
+        data_type='graph'
+        folder=name # 
+    import igraph as ig
+    graphs=[ig.read(filename) for filename in name]    
+    labels=read_labels(name)
+    x_list=[]
+    for graph in graphs:
+        if 'label' not in graph.vs.attributes():
+            graph.vs['label']=[0]*len(graph.vs)
+        if 'weight' in graph.es.attributes():
+            graph.es['weight']=[0]*len(graph.es)
+            
+        d=dhg.Graph(num_v=graph.vs,e_list=graph.get_edgelist())
+        if data_type == "graph" and model_type == "hypergraph":
+            trans_func = g2hg_func
+        elif data_type == "hypergraph" and model_type == "graph":
+            trans_func = hg2g_func
+        else:
+            trans_func = lambda x: x     
+        d=trans_func(d)   
+        x_list.append(
+            {
+                "num_v": d.num_v,
+                "num_e": d.num_e,
+                "v_lbl": graph.vs['label'],
+                "g_lbl": graph.es['weight'],
+                "e_list": d.e[0],
+                "dhg": d,
+#                "dhgg":ds,
+            }
+        )
+    
+        
 
 def load_data(name, root, degree_as_tag, model_type):
     # graph dataset
@@ -49,6 +95,10 @@ def load_data(name, root, degree_as_tag, model_type):
         data_type = "hypergraph"
         folder = "TWITTER"
         multi_label = False
+    elif name.startswith("p"):
+        data_type = 'hypergraph'
+        folder = "Performance"
+        multi_label = False
     else:
         raise NotImplementedError
     if data_type == "graph" and model_type == "hypergraph":
@@ -57,7 +107,7 @@ def load_data(name, root, degree_as_tag, model_type):
         trans_func = hg2g_func
     else:
         trans_func = lambda x: x
-
+        
     # read data
     x_list = []
     with open(f"{root}/{data_type}/{folder}/{name}.txt", "r") as f:
@@ -76,15 +126,21 @@ def load_data(name, root, degree_as_tag, model_type):
                 d = Graph(num_v, e_list)
             else:
                 d = Hypergraph(num_v, e_list)
-            d = trans_func(d)
+            #d,_ = trans_func(d)
+            d=trans_func(d)
+            ds=None
+            if isinstance(d,dhg.Hypergraph):
+                ds,_=Graph.from_hypergraph_star(d)
+                #ds=Graph.from_hypergraph_clique(d)
             x_list.append(
                 {
-                    "num_v": num_v,
+                    "num_v": d.num_v,
                     "num_e": d.num_e,
                     "v_lbl": v_lbl,
                     "g_lbl": g_lbl,
                     "e_list": d.e[0],
                     "dhg": d,
+                    "dhgg":ds,
                 }
             )
     for x in x_list:
@@ -143,7 +199,6 @@ def load_data(name, root, degree_as_tag, model_type):
     }
     return x_list, y_list, meta
 
-
 def separate_data(x_list, y_list, n_fold, seed):
     kf = KFold(n_splits=n_fold, shuffle=True, random_state=seed)
     n_fold_idx = []
@@ -151,6 +206,18 @@ def separate_data(x_list, y_list, n_fold, seed):
         n_fold_idx.append((train_idx, test_idx))
     return n_fold_idx
 
+from sklearn.svm import SVR
+from sklearn.metrics import mean_squared_error,mean_absolute_error,mean_squared_log_error
+def train_SVR(train_X,train_Y,test_X,test_Y):
+    svr=SVR(kernel='rbf',C=100,epsilon=0.1)
+    svr.fit(train_X,train_Y)
+    y_pred=svr.predict(test_X)
+    mse=mean_squared_error(test_Y,y_pred)
+    mae=mean_absolute_error(test_Y,y_pred)
+    log_mse=0
+    #log_mse=mean_squared_log_error(test_Y,y_pred)
+    return mse,mae,log_mse
+    
 
 def train_infer_SVM(train_X, train_Y, test_X, test_Y, multi_label):
     if not multi_label:
@@ -164,10 +231,108 @@ def train_infer_SVM(train_X, train_Y, test_X, test_Y, multi_label):
     outputs = clf.predict(test_X)
     test_val, best_res = performance(outputs, test_Y, multi_label)
     return test_val, best_res
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier,AdaBoostClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import  LogisticRegression
+
+def _ml_train_infer(train_X,train_Y,test_X,test_Y, method='knn'):
+    if method=='knn':
+        clf=KNeighborsClassifier(n_neighbors=3,
+                                 weights='uniform',
+                                 leaf_size=20,
+                                 algorithm='kd_tree',
+                                 p=2,
+                                 #verbose=0,
+                                 #random_seed=2024,
+                                 )
+    if method=='rf':
+        clf=RandomForestClassifier(n_estimators=100,
+                                   criterion='gini', # entropy
+                                   max_depth=None,
+                                   min_samples_leaf=1,
+                                   max_features='auto', # auto,sqrt,log2
+                                   )
+    if method == 'lr':
+        clf= LogisticRegression(multi_class='multinomial', solver='newton-cg', max_iter=1000)
+    if method=='by':
+        clf=GaussianNB(var_smoothing=1e-9,
+                       priors=None)
+    if method=='ada':
+        base_estimator = DecisionTreeClassifier(max_depth=1)
+        clf=AdaBoostClassifier(base_estimator=base_estimator, 
+                                    n_estimators=50, 
+                                    learning_rate=1.0, 
+                                    algorithm='SAMME.R', 
+                                    random_state=42)
+    if method=='boot':
+        clf=GradientBoostingClassifier(n_estimators=100, 
+                                       learning_rate=0.1, 
+                                       max_depth=3, 
+                                       random_state=42)
+        
+    clf.fit(train_X,train_Y)
+    outputs = clf.predict(test_X)
+    test_val,best_res = performance(outputs,test_Y,multi_label=False)
+    return test_val,best_res
+import numpy as np
+from sklearn.cluster import KMeans,DBSCAN,AgglomerativeClustering
+from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
+from sklearn.metrics import normalized_mutual_info_score,adjusted_rand_score,v_measure_score
+#(NMI,ARI,v_measure))
+def _ml_train_cluster(train_X,train_labels,test_X,test_labels,method='kmeans',n_clusters=3,random_state=42):
+    '''
+    训练聚类模型并评估性能  
+    '''
+    if method == 'kmeans':
+        model=KMeans(n_clusters=n_clusters, random_state=random_state)
+    else:
+        raise ValueError(f"Unsupported method: {method}. Supported methods are 'kmeans', 'dbscan', 'hierarchical'.")
+    # 训练模型
+    model.fit(train_X)
+    _train_labels=model.labels_
+    # 获取聚类标签
+    if hasattr(model, 'predict'):
+        _test_labels = model.predict(test_X)
+    else:
+        _test_labels = model.fit_predict(test_X)
+    
+    metric=performance_cluster(_test_labels,test_labels,test_X)
+    return metric['silhouette'],metric
+
 
 
 # -------------------- Metrics ----------------------------
-
+def calc_class_acc(preds,targets):
+    preds=np.array(preds)
+    targets=np.array(targets)
+    classes=np.unique(targets)
+    for cls_idx,cls in enumerate(classes):
+        # 找到索引
+        cls_indices=(targets==cls)
+        # 计算对应索引的精度
+        cls_acc=accuracy_score(targets[cls_indices],preds[cls_indices]) # 
+        cls_sum=np.sum(targets[cls_indices]==preds[cls_indices])
+        cls_total=np.sum(cls_indices)
+        print(f"class index {cls_idx} acc: {cls_acc:.4f},\
+            ({cls_sum}/{cls_total})")
+def performance_cluster(preds,targets,test_X,with_gt=True):
+    # 计算内部评估
+    metrics= {}
+    metrics['silhouette'] = silhouette_score(test_X, preds)
+    metrics['davies_bouldin'] = davies_bouldin_score(test_X, preds)
+    metrics['calinski_harabasz'] = calinski_harabasz_score(test_X, preds)
+    #-----------------------#
+    metrics['nmi']=metrics['ari']=metrics['acc']=metrics['f1']=0
+    if with_gt:
+        # 计算外部评估
+        metrics['nmi'] = normalized_mutual_info_score(preds, targets)
+        metrics['ari'] = adjusted_rand_score(preds, targets)
+        metrics['acc'] = accuracy_score(preds, targets)
+        metrics['f1'] = f1_score(preds, targets, average='macro')
+    return metrics
 
 def performance(preds: np.ndarray, targets: np.ndarray, multi_label: bool):
     if multi_label:
@@ -193,6 +358,7 @@ def performance(preds: np.ndarray, targets: np.ndarray, multi_label: bool):
     else:
         if len(preds.shape) == 2:
             preds = np.argmax(preds, axis=1)
+        calc_class_acc(preds,targets)
         acc = accuracy_score(targets, preds)
         f1_micro = f1_score(targets, preds, average="micro")
         f1_macro = f1_score(targets, preds, average="macro")
@@ -206,8 +372,17 @@ def performance(preds: np.ndarray, targets: np.ndarray, multi_label: bool):
         return acc, res
 
 
+
 if __name__ == "__main__":
     g_list, y_list, meta = load_data("MUTAG", "data", True, "graph")
-    print(g_list[0])
-    g_list, y_list, meta = load_data("RHG_3", "data", True, "graph")
-    print(g_list[0])
+    all_deg=0
+    all_v=0
+    for g in g_list:
+        v=sum(g['dhg'].deg_v)
+        num_v=g['dhg'].num_v
+        all_deg+=v
+        all_v+=num_v
+    print(all_deg/all_v)
+    # print(g_list[0])
+    # g_list, y_list, meta = load_data("RHG_3", "data", True, "graph")
+    # print(g_list[0])

@@ -1,6 +1,6 @@
 # Reinterpreting Hypergraph Kernels: Insights Through Homomorphism Analysis
 
-This repository contains the code for the paper "" published in IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI) 2024 by Yifan Zhang, Shaoyi Du*, [Yifan Feng](https://fengyifan.site/), Shihui Ying, and Yue Gao. The paper is available at [here](https://ieeexplore.ieee.org/document/11159289).
+This repository contains the code for the paper "Reinterpreting Hypergraph Kernels: Insights Through Homomorphism Analysis" published in IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI) 2024 by Yifan Zhang, Shaoyi Du*, [Yifan Feng](https://fengyifan.site/), Shihui Ying, and Yue Gao. The paper is available at [here](https://ieeexplore.ieee.org/document/11159289).
 
 ![framework](doc/fw25.jpg)
 
@@ -78,4 +78,5 @@ If you find this repository useful in your research, please cite our following p
   publisher={IEEE}
 }
 ```
+
 

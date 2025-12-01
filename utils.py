@@ -21,42 +21,7 @@ def read_labels(filename):
         labels=[label.strip() for label in labels]
     return labels
 
-def load_data_(name,root,degree_as_tag,model_type):
-    if name in ['DD','PTC-MM']:
-        data_type='graph'
-        folder=name # 
-    import igraph as ig
-    graphs=[ig.read(filename) for filename in name]    
-    labels=read_labels(name)
-    x_list=[]
-    for graph in graphs:
-        if 'label' not in graph.vs.attributes():
-            graph.vs['label']=[0]*len(graph.vs)
-        if 'weight' in graph.es.attributes():
-            graph.es['weight']=[0]*len(graph.es)
-            
-        d=dhg.Graph(num_v=graph.vs,e_list=graph.get_edgelist())
-        if data_type == "graph" and model_type == "hypergraph":
-            trans_func = g2hg_func
-        elif data_type == "hypergraph" and model_type == "graph":
-            trans_func = hg2g_func
-        else:
-            trans_func = lambda x: x     
-        d=trans_func(d)   
-        x_list.append(
-            {
-                "num_v": d.num_v,
-                "num_e": d.num_e,
-                "v_lbl": graph.vs['label'],
-                "g_lbl": graph.es['weight'],
-                "e_list": d.e[0],
-                "dhg": d,
-#                "dhgg":ds,
-            }
-        )
-    
         
-
 def load_data(name, root, degree_as_tag, model_type):
     # graph dataset
     if name in ["RG_macro", "RG_sub"]:

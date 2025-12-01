@@ -36,7 +36,7 @@ print = logging.info
 multi_label, criterion = None, None
 
 
-@hydra.main(config_path=".", config_name="ml_config",version_base='1.2')
+@hydra.main(config_path="./configs", config_name="ml_config",version_base='1.2')
 def main(cfg: DictConfig):
     if cfg.model.name in [
         "hypergraph_rooted",

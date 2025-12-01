@@ -2,7 +2,7 @@ seed: 2023
 
 data:
   n_fold: 5
-  root: /home/zhangyifan/alive/HIC/data
+  root: /home/zhangyifan/alive/RethinkHGK
   # <graph>
   # RG_macro, RG_sub
   # IMDBBINARY, IMDBMULTI, MUTAG, NCI1, PROTEINS

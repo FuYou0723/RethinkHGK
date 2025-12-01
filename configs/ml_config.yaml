@@ -2,7 +2,7 @@ seed: 2023
 
 data:
   n_fold: 5
-  root: /home/zhangyifan/alive/HIC/data
+  root: /home/zhangyifan/alive/RethinkHGK
   # <graph>
   # RG_macro, RG_sub
   # IMDBBINARY, IMDBMULTI, MUTAG, NCI1, PROTEINS
@@ -45,14 +45,14 @@ model:
   #name: hypergraph_directed_line
   #name: graph_shortestpath
   #name: hypergraph_rethgk
-  #name: hypergraph_subtree
+  name: hypergraph_subtree
   #name: hypergraph_hyedge
   #name: hypergraph_ewl
   #name: hypergraph_sck
   #name: hypergraph_spk
   #name: graph_2wl
   #name: hypergraph_hsvd
-  name: hypergraph_motifs
+  #name: hypergraph_motifs
   #name: hypergraph_mochy
   #name: hypergraph_v_e
   #name: hypergraph_svk

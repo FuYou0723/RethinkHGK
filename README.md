@@ -65,18 +65,25 @@ If you find this repository useful in your research, please cite our following p
   author={Zhang, Yifan and Du, Shaoyi and Feng, Yifan and Ying, Shihui and Gao, Yue},
   journal={IEEE Transactions on Pattern Analysis and Machine Intelligence}, 
   title={Reinterpreting Hypergraph Kernels: Insights Through Homomorphism Analysis}, 
-  year={2025},
-  pages={1-16},
+  year={2026},
+  volume={48},
+  number={1},
+  pages={466-481},
   doi={10.1109/TPAMI.2025.3608902}
   }
 
 @article{feng2024hypergraph,
-  title={Hypergraph Isomorphism Computation},
   author={Feng, Yifan and Han, Jiashu and Ying, Shihui and Gao, Yue},
-  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence}, 
+  title={Hypergraph Isomorphism Computation}, 
   year={2024},
-  publisher={IEEE}
+  volume={46},
+  number={5},
+  pages={3880-3896},
+  doi={10.1109/TPAMI.2024.3353199}
 }
+
 ```
+
 
 
